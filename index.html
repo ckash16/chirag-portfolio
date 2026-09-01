@@ -493,6 +493,27 @@
   }
   .submit-btn:hover{ transform: translateY(-2px); background: #d8b578; }
 
+  .contact-success{
+    display: none;
+    text-align: center;
+    padding: 48px 24px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+  }
+  .contact-success.show{ display: block; }
+  .contact-success svg{ margin: 0 auto 16px; color: var(--accent); }
+  .contact-success h3{ font-family: var(--font-display); font-size: 1.3rem; margin-bottom: 8px; }
+  .contact-success p{ color: var(--text-muted); font-size: 0.95rem; }
+  .contact-error{
+    display: none;
+    color: #e8a3a3;
+    font-size: 13px;
+    margin-top: 14px;
+  }
+  .contact-error.show{ display: block; }
+  .submit-btn[disabled]{ opacity: 0.6; cursor: not-allowed; }
+
   /* ---------- Footer ---------- */
   footer{
     padding: 40px 0;
@@ -902,25 +923,38 @@
         </a>
       </div>
 
-      <form name="contact" method="POST" data-netlify="true" data-netlify-honeypot="bot-field">
-        <input type="hidden" name="form-name" value="contact">
-        <p style="display:none">
-          <label>Leave this field blank: <input name="bot-field"></label>
-        </p>
-        <div class="field">
-          <label for="name">Name</label>
-          <input type="text" id="name" name="name" required>
+      <div id="contact-form-wrap">
+        <form name="contact" method="POST" data-netlify="true" data-netlify-honeypot="bot-field" id="contact-form">
+          <input type="hidden" name="form-name" value="contact">
+          <p style="display:none">
+            <label>Leave this field blank: <input name="bot-field"></label>
+          </p>
+          <div class="field">
+            <label for="name">Name</label>
+            <input type="text" id="name" name="name" required>
+          </div>
+          <div class="field">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" required>
+          </div>
+          <div class="field">
+            <label for="message">Message</label>
+            <textarea id="message" name="message" required></textarea>
+          </div>
+          <button type="submit" class="submit-btn" id="contact-submit">Send message</button>
+          <p id="contact-error" class="contact-error">
+            Something went wrong sending that — please try again, or email me directly via LinkedIn.
+          </p>
+        </form>
+        <div id="contact-success" class="contact-success">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M8 12.5l2.5 2.5L16 9.5"/>
+          </svg>
+          <h3>Message sent</h3>
+          <p>Thanks for reaching out — I'll get back to you shortly.</p>
         </div>
-        <div class="field">
-          <label for="email">Email</label>
-          <input type="email" id="email" name="email" required>
-        </div>
-        <div class="field">
-          <label for="message">Message</label>
-          <textarea id="message" name="message" required></textarea>
-        </div>
-        <button type="submit" class="submit-btn">Send message</button>
-      </form>
+      </div>
     </div>
   </section>
 
@@ -939,5 +973,48 @@
   </div>
 </footer>
 
+
+<script>
+(function () {
+  var form = document.getElementById('contact-form');
+  var formWrap = document.getElementById('contact-form-wrap');
+  var successBox = document.getElementById('contact-success');
+  var errorBox = document.getElementById('contact-error');
+  var submitBtn = document.getElementById('contact-submit');
+
+  function encode(data) {
+    return Object.keys(data)
+      .map(function (k) { return encodeURIComponent(k) + "=" + encodeURIComponent(data[k]); })
+      .join("&");
+  }
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    errorBox.classList.remove('show');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Sending…';
+
+    var formData = new FormData(form);
+    var payload = {};
+    formData.forEach(function (value, key) { payload[key] = value; });
+
+    fetch('/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: encode(payload)
+    })
+      .then(function (response) {
+        if (!response.ok) throw new Error('Network response was not ok');
+        form.style.display = 'none';
+        successBox.classList.add('show');
+      })
+      .catch(function () {
+        errorBox.classList.add('show');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Send message';
+      });
+  });
+})();
+</script>
 </body>
 </html>
